@@ -1,0 +1,24 @@
+{
+  "id": "bili-browse",
+  "name": "聊天逛 B 站",
+  "version": "1.1.2",
+  "apiVersion": 1,
+  "category": "media",
+  "description": "说“去逛逛B站”即可立即启动刷 B 站插件的人格化图文筛选与分享。",
+  "enabledByDefault": true,
+  "requires": [
+    "bili.scroll-run"
+  ],
+  "prompt": {
+    "sections": [
+      {
+        "id": "bili-browse-trigger",
+        "priority": 70,
+        "title": "逛 B 站",
+        "content": "用户明确要求去逛逛B站、刷B站、找视频分享时，优先调用 bili-browse__browse 工具。不要用网页浏览、网页抓取或通用搜索代替，B站网页412不能当作插件运行结果。工具不可用就说明未能调用，并提示在插件面板检查聊天工具状态，不要编造插件已失败或已完成。工具返回 started 只表示已启动，审核及发送在后台继续，完成和回执见插件面板；不得虚构已看或已发，不要为了等结果重复启动。"
+      }
+    ]
+  },
+  "settings": {},
+  "configSchema": {}
+}

@@ -1,0 +1,148 @@
+{
+  "id": "bili-scroll",
+  "name": "刷 B 站",
+  "version": "1.1.2",
+  "apiVersion": 1,
+  "category": "media",
+  "description": "批量初筛、按当前人设逐条审字幕与B站抽帧拼图，择优后AI生成评论与QQ私信。支持聊天立即逛B站。面板：http://127.0.0.1:3219/",
+  "enabledByDefault": true,
+  "permissions": [
+    "web_fetch"
+  ],
+  "capabilities": [
+    "bili.scroll-status",
+    "bili.scroll-run"
+  ],
+  "settings": {
+    "topics": "",
+    "qqWhitelist": "",
+    "autoEnabled": false,
+    "runTimes": "12:30",
+    "timeZone": "Asia/Shanghai",
+    "maxDaily": 3,
+    "maxPerRun": 3,
+    "maxStoryboards": 3,
+    "chatEnabled": true,
+    "maxCandidates": 12,
+    "recentDays": 7,
+    "minScore": 75,
+    "qqEnabled": false,
+    "commentEnabled": false,
+    "mentionUid": "",
+    "mentionName": "",
+    "maxComments": 1,
+    "reportMode": "完整",
+    "extraPrompt": "",
+    "panelPort": 3219
+  },
+  "configSchema": {
+    "topics": {
+      "type": "string",
+      "label": "关注关键词",
+      "description": "换行或逗号分隔；为空时等待配置，不擅自选择主题。",
+      "multiline": true
+    },
+    "qqWhitelist": {
+      "type": "string",
+      "label": "QQ 转发白名单",
+      "description": "独立维护，一行一个 QQ 号；为空时不发给任何人。宿主黑白名单仍是最终发送边界。",
+      "multiline": true
+    },
+    "autoEnabled": {
+      "type": "boolean",
+      "label": "定时刷 B 站",
+      "description": "打开后按下方时间运行；QQ Agent 需要保持运行。"
+    },
+    "runTimes": {
+      "type": "string",
+      "label": "每天运行时间",
+      "description": "北京时间，24 小时制；多个时间用逗号分隔，如 12:30,20:30。"
+    },
+    "timeZone": {
+      "type": "string",
+      "label": "时区",
+      "description": "默认 Asia/Shanghai。"
+    },
+    "maxDaily": {
+      "type": "number",
+      "label": "每天自动推荐上限",
+      "description": "0 = 不自动运行；聊天主动触发不占用也不受此额度限制。"
+    },
+    "maxPerRun": {
+      "type": "number",
+      "label": "每轮精选几条",
+      "description": "1–10；逐条审核全部完成后按评分选优，聊天触发也使用此上限。"
+    },
+    "maxStoryboards": {
+      "type": "number",
+      "label": "每视频最多抽帧拼图",
+      "description": "1–8；均匀选取 B 站原生拼图并以图片传给模型，超过时明确标记抽样范围。"
+    },
+    "chatEnabled": {
+      "type": "boolean",
+      "label": "允许聊天立即逛 B 站",
+      "description": "白名单用户可说“去逛逛B站”；复用 QQ 白名单作为发起人许可，不受定时开关及每日自动额度限制。"
+    },
+    "maxCandidates": {
+      "type": "number",
+      "label": "每轮批量初筛候选数",
+      "description": "1–40；先统一淘汰不合适的视频，再逐条审字幕与抽帧拼图。"
+    },
+    "recentDays": {
+      "type": "number",
+      "label": "搜索最近几天",
+      "description": "1–30。"
+    },
+    "minScore": {
+      "type": "number",
+      "label": "推荐评分门槛",
+      "description": "0–100，AI 结合人设、字幕和抽帧拼图判断。"
+    },
+    "qqEnabled": {
+      "type": "boolean",
+      "label": "QQ 私聊分享",
+      "description": "向本插件白名单发送 AI 按接收会话人设生成的消息和视频链接。"
+    },
+    "commentEnabled": {
+      "type": "boolean",
+      "label": "B 站评论并 @",
+      "description": "使用扫码登录的账号，在推荐视频下发表评论。"
+    },
+    "mentionUid": {
+      "type": "string",
+      "label": "要 @ 的 B 站 UID",
+      "description": "可填写 UID 或昵称之一；两者都填时会校验是否属于同一用户。"
+    },
+    "mentionName": {
+      "type": "string",
+      "label": "要 @ 的 B 站昵称",
+      "description": "昵称精确匹配，重名或查不到时停止评论。"
+    },
+    "maxComments": {
+      "type": "number",
+      "label": "每轮最多评论几条",
+      "description": "1–5；同一视频只尝试评论一次，结果不明确时不自动重发。"
+    },
+    "reportMode": {
+      "type": "enum",
+      "label": "日报详细程度",
+      "description": "完整 / 薄版 / 不写。",
+      "values": [
+        "完整",
+        "薄版",
+        "不写"
+      ]
+    },
+    "extraPrompt": {
+      "type": "string",
+      "label": "视频筛选偏好",
+      "description": "如偏好实操教程、跳过营销；只影响筛选，不会读取私人聊天或记忆。",
+      "multiline": true
+    },
+    "panelPort": {
+      "type": "number",
+      "label": "操作面板端口",
+      "description": "扫码登录、立即运行、查看日报：http://127.0.0.1:3219/ 。修改端口后关闭再开启插件。"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+node_modules/
+dist/
+test-results/
+reference-docs/
+data/
+backups/
+.env
+.env.*
+*.log
+*.zip
+install.mjs
+fetch-docs.mjs
+prepare-notices.mjs
+refine.mjs
+test-live.mjs
+test-model-live.mjs
+verify-*.mjs
