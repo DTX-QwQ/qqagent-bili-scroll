@@ -10,9 +10,9 @@ export const fields = {
   timeZone:['string','时区','默认 Asia/Shanghai。'],maxDaily:['number','每天自动推荐上限','0 = 不自动运行；聊天主动触发不占用也不受此额度限制。'],
   maxPerRun:['number','每轮精选几条','1–10；逐条审核全部完成后按评分选优，聊天触发也使用此上限。'],
   maxStoryboards:['number','每视频最多抽帧拼图','1–8；均匀选取 B 站原生拼图并以图片传给模型，超过时明确标记抽样范围。'],
-  chatEnabled:['boolean','允许聊天立即逛 B 站','白名单用户可说“去逛逛B站”；复用 QQ 白名单作为发起人许可，不受定时开关及每日自动额度限制。'],
+  chatEnabled:['boolean','允许聊天立即逛 B 站','白名单用户可说“去逛逛B站”；消息指定主题时仅本轮覆盖，未指定则用配置关键词。不受定时开关及每日自动额度限制。'],
   maxCandidates:['number','每轮批量初筛候选数','1–40；先统一淘汰不合适的视频，再逐条审字幕与抽帧拼图。'],recentDays:['number','搜索最近几天','1–30。'],minScore:['number','推荐评分门槛','0–100，AI 结合人设、字幕和抽帧拼图判断。'],
-  qqEnabled:['boolean','QQ 私聊分享','向本插件白名单发送 AI 按接收会话人设生成的消息和视频链接。'],
+  qqEnabled:['boolean','QQ 私聊分享','向本插件白名单发送推荐及每轮一段简短 AI 总结；合并相似原因，略过低价值内容，零推荐也告知结束。'],
   commentEnabled:['boolean','B 站评论并 @','使用扫码登录的账号，在推荐视频下发表评论。'],
   mentionUid:['string','要 @ 的 B 站 UID','可填写 UID 或昵称之一；两者都填时会校验是否属于同一用户。'],
   mentionName:['string','要 @ 的 B 站昵称','昵称精确匹配，重名或查不到时停止评论。'],
@@ -64,6 +64,19 @@ export function messageText(raw,{channel,url}={}){
   if(typeof text!=='string'||!text.trim()||text.length>(channel==='qq'?900:500)||/[\u0000-\u0008\u000b-\u001f\u007f]|\[CQ:|<[^>]+>|@/i.test(text))throw new Error('AI 消息正文无效，已跳过，禁止使用程序文案兜底');
   const links=text.match(/https?:\/\/[^\s<>"“”‘’，。！？；）)】」』～]+/g)||[];
   if(channel==='qq'?(links.length!==1||![url,url?.replace(/\/$/,'')].includes(links[0])):links.length>0)throw new Error('AI 消息链接不符合要求：QQ消息须含指定视频链接且仅此一个，评论不含链接');
+  return text.trim();
+}
+export function roundSummaryText(raw,videos,{status}={}){
+  const text=parseObject(raw).text;
+  if(typeof text!=='string'||!text.trim()||text.length>300||/[\u0000-\u0008\u000b-\u001f\u007f]|\[CQ:|<[^>]+>|@/i.test(text))throw new Error('AI 本轮总结正文无效，须为300字以内的简短总结');
+  if(/[\r\n]|(?:^|\s)(?:[-*•]|\d+[、.)）])\s/.test(text.trim()))throw new Error('AI 总结须为一段自然口语，不要逐条列举或分段');
+  if(!/本轮/.test(text)||!/结束|完成/.test(text))throw new Error('AI 总结未明确本轮已经结束');
+  if(status==='done'&&/未正常完成|没正常完成|没有正常完成|本轮(?:运行|任务)?失败/.test(text))throw new Error('本轮正常结束，零推荐或无候选不能说未正常完成');
+  if(!videos.length&&/标题|简介|字幕|画面|初筛|抽帧|观看/.test(text))throw new Error('本段没有候选，不得声称或讨论已进行标题初筛、字幕或画面审核，只需报告没有新候选及其原因');
+  const allowed=new Set(videos.map(v=>v.bvid));
+  if((text.match(/BV[a-zA-Z0-9]{10}/g)||[]).some(bvid=>!allowed.has(bvid)))throw new Error('AI 总结编造了候选视频');
+  const links=text.match(/https?:\/\/[^\s<>"“”‘’，。！？；）)】」』～]+/g)||[];
+  if(links.some(link=>![...allowed].some(bvid=>[ `https://www.bilibili.com/video/${bvid}`,`https://www.bilibili.com/video/${bvid}/`].includes(link))))throw new Error('AI 总结包含候选以外的链接');
   return text.trim();
 }
 export function requesterFromContext(ctx){

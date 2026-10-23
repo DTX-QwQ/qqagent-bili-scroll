@@ -1,10 +1,10 @@
 {
   "id": "bili-scroll",
   "name": "刷 B 站",
-  "version": "1.1.2",
+  "version": "1.1.4",
   "apiVersion": 1,
   "category": "media",
-  "description": "批量初筛、按当前人设逐条审字幕与B站抽帧拼图，择优后AI生成评论与QQ私信。支持聊天立即逛B站。面板：http://127.0.0.1:3219/",
+  "description": "批量初筛、按当前人设逐条审字幕与B站抽帧拼图，择优后AI生成评论与QQ私信。聊天可指定本轮临时主题，每轮结束生成一段简短AI总结，零推荐也通知。面板：http://127.0.0.1:3219/",
   "enabledByDefault": true,
   "permissions": [
     "web_fetch"
@@ -81,7 +81,7 @@
     "chatEnabled": {
       "type": "boolean",
       "label": "允许聊天立即逛 B 站",
-      "description": "白名单用户可说“去逛逛B站”；复用 QQ 白名单作为发起人许可，不受定时开关及每日自动额度限制。"
+      "description": "白名单用户可说“去逛逛B站”；消息指定主题时仅本轮覆盖，未指定则用配置关键词。不受定时开关及每日自动额度限制。"
     },
     "maxCandidates": {
       "type": "number",
@@ -101,7 +101,7 @@
     "qqEnabled": {
       "type": "boolean",
       "label": "QQ 私聊分享",
-      "description": "向本插件白名单发送 AI 按接收会话人设生成的消息和视频链接。"
+      "description": "向本插件白名单发送推荐及每轮一段简短 AI 总结；合并相似原因，略过低价值内容，零推荐也告知结束。"
     },
     "commentEnabled": {
       "type": "boolean",

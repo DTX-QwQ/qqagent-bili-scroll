@@ -26,7 +26,18 @@ function render(s){
   if(!items.length)$('items').append(el('div','还没有推荐。先填写主题、扫码并试跑。','empty'));
   for(const v of items){const box=el('div',undefined,'item');const a=el('a',v.title);a.href='https://www.bilibili.com/video/'+v.bvid+'/';a.target='_blank';a.rel='noopener noreferrer';box.append(a,el('p',v.reason),el('span',`${v.score} 分 · ${v.scope}`,'tag'));if(v.visualEvidence)box.append(el('p','画面依据：'+v.visualEvidence));if(v.drafts){box.append(el('p','AI 私信草稿：'+v.drafts.qq),el('p','AI 评论草稿：'+v.drafts.comment));}for(const [uid,d] of Object.entries(v.qq||{})){box.append(el('span',`QQ ${uid}：${names[d.status]||d.status}`,'tag'));if(d.error)box.append(el('p',d.error,'notice'));}if(v.comment)box.append(el('span','B站：'+(names[v.comment.status]||v.comment.status),'tag'));if(lastPreview)box.append(el('span','仅预览，未发送','tag'));$('items').append(box);}
   $('runs').replaceChildren();if(!st.runs.length)$('runs').append(el('p','暂无记录。','hint'));
-  for(const r of st.runs.slice(0,8)){const box=el('div',undefined,'item');box.append(el('div',`${r.preview?'预览':'正式'} · ${names[r.status]||r.status} · ${r.day}`),el('p',`检查 ${r.scanned} / 推荐 ${r.selected.length} / 跳过 ${r.skipped.length} / 问题 ${r.errors.length}`));if(r.errors.length)box.append(el('div',r.errors.join('\n'),'notice'));const b=el('button','查看日报');b.onclick=()=>action(async()=>{const d=await api(`report?date=${r.day}&preview=${r.preview?1:0}`);$('report').hidden=false;$('report').textContent=d.text;});box.append(b);$('runs').append(box);}
+  for(const r of st.runs.slice(0,8)){
+    const box=el('div',undefined,'item');box.append(el('div',`${r.preview?'预览':'正式'} · ${names[r.status]||r.status} · ${r.day}`),el('p',`检查 ${r.scanned} / 推荐 ${r.selected.length} / 跳过 ${r.skipped.length} / 问题 ${r.errors.length}`));
+    if(r.topics)box.append(el('p',`本轮主题：${r.topics}（${r.topicSource==='chat'?'聊天临时指定':'配置关键词'}）`,'hint'));
+    if(r.errors.length)box.append(el('div',r.errors.join('\n'),'notice'));
+    for(const [uid,summary] of Object.entries(r.summaries||{})){
+      const details=el('details');details.append(el('summary',`本轮 AI 总结 · ${uid==='local'?'本地草稿':'QQ '+uid} · ${names[summary.status]||({draft:'仅草稿，未发送',generating:'生成中'}[summary.status])||summary.status}`));
+      for(const part of summary.parts||[])details.append(el('pre',part.text));
+      if(summary.error)details.append(el('p',summary.error,'notice'));box.append(details);
+    }
+    if(r.summarySkipped||r.summaryError)box.append(el('p',r.summarySkipped||r.summaryError,'hint'));
+    const b=el('button','查看日报');b.onclick=()=>action(async()=>{const d=await api(`report?date=${r.day}&preview=${r.preview?1:0}`);$('report').hidden=false;$('report').textContent=d.text;});box.append(b);$('runs').append(box);
+  }
 }
 async function refresh(){if(polling)return;polling=true;try{render(await api('state'));}catch(e){$('phase').textContent='连接中断：'+e.message;}finally{polling=false;}}
 async function action(fn){try{await fn();await refresh();}catch(e){notice(e.message,true);}}

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {ids,configOf,clock,parseDecision,parseBatch,messageText} from '../plugins/bili-scroll/core.js';
+import {ids,configOf,clock,parseDecision,parseBatch,messageText,roundSummaryText} from '../plugins/bili-scroll/core.js';
 test('名单为空不放行，严格校验且去重',()=>{assert.deepEqual(ids(''),[]);assert.deepEqual(ids('12345\n67890,12345'),['12345','67890']);for(const v of ['123abc','group:12345','0','0012345'])assert.throws(()=>ids(v));});
 test('无效配置拒绝，0 配额不被默认值覆盖',()=>{assert.equal(configOf({maxDaily:0}).maxDaily,0);for(const c of [{maxDaily:-1},{maxCandidates:41},{runTimes:'25:01'},{runTimes:''},{timeZone:'fake'},{mentionUid:'1e5'},{mentionName:'a\nb'},{qqEnabled:'true'}])assert.throws(()=>configOf(c));});
 test('日期按配置时区跨天，计划时间排序去重',()=>{assert.deepEqual(clock(Date.parse('2026-10-20T16:30:00Z'),'Asia/Shanghai'),{date:'2026-10-21',time:'00:30'});assert.equal(configOf({runTimes:'20:30,12:30,20:30'}).runTimes,'12:30,20:30');});
@@ -8,3 +8,11 @@ test('AI 输出严格判断，去除 CQ 与 HTML 内容',()=>{assert.throws(()=>
 test('批量初筛不接受缺项、重复、陌生视频或伪布尔值',()=>{const list=[{bvid:'BV1234567890'},{bvid:'BVabcdefghij'}];const a={bvid:list[0].bvid,keep:true,reason:'符合'};for(const decisions of [[],[a,a],[a,{bvid:'陌生',keep:false,reason:'无关'}],[a,{bvid:list[1].bvid,keep:'true',reason:'好'}]])assert.throws(()=>parseBatch(JSON.stringify({decisions}),list));});
 test('AI完整正文只放行指定视频链接，拒绝额外账号、控制码或空消息',()=>{const url='https://www.bilibili.com/video/BV1234567890/';assert.equal(messageText(JSON.stringify({text:'我喜欢这个例子 '+url}),{channel:'qq',url}),'我喜欢这个例子 '+url);for(const text of ['',url+' https://evil.com',url+' @123','[CQ:at,qq=all] '+url,'只有正文没有链接'])assert.throws(()=>messageText(JSON.stringify({text}),{channel:'qq',url}));assert.equal(messageText('{"text":"这个画面好可爱"}',{channel:'comment'}),'这个画面好可爱');});
 test('AI 自然书写的同一BV链接允许省末尾斜杠及中文标点，不改正文',()=>{const url='https://www.bilibili.com/video/BV1234567890/';for(const text of ['来看看 '+url.slice(0,-1),'想分享“'+url+'”～'])assert.equal(messageText(JSON.stringify({text}),{channel:'qq',url}),text);});
+test('总结允许省略候选并合并原因，须简短单段，拒绝编造、外链及QQ控制码',()=>{
+ const videos=[{bvid:'BV1234567890'},{bvid:'BVabcdefghij'}],valid='本轮已结束。视频 BV1234567890 不推荐：营销。视频 BVabcdefghij 跳过：无字幕。';assert.equal(roundSummaryText(JSON.stringify({text:valid}),videos),valid);
+ const concise='本轮已结束，推荐0条，候选大多偏营销或缺少可审核内容，没发现值得分享的。';assert.equal(roundSummaryText(JSON.stringify({text:concise}),videos),concise);
+ for(const text of [valid+' BV0000000000',valid+' https://evil.example/',valid+' [CQ:at,qq=all]',valid.replace('本轮已结束','还在刷'),valid+'。'.repeat(301),valid+'\n另一条',valid+'\n1. 营销'])assert.throws(()=>roundSummaryText(JSON.stringify({text}),videos));
+ assert.equal(roundSummaryText('{"text":"本轮已完成，没有新候选。"}',[]),'本轮已完成，没有新候选。');
+ assert.throws(()=>roundSummaryText('{"text":"本轮结束，没正常完成推荐。"}',[],{status:'done'}));
+ assert.throws(()=>roundSummaryText('{"text":"本轮结束，没有新候选，只看了标题和简介。"}',[]));
+});
